@@ -2,12 +2,15 @@
 #
 # Bitrock unpacking script
 #
-# This script must be executed using 32-bit tclkit
+# This script must be executed using 32-bit tclkit for 32-bit
+# installer, while using 64-bit tclkit for 64-bit installer
 #
-# Author : mickael9 <mickael9 at gmail dot com>
+# Author : mickael9 <mickael9@gmail.com>
 #
 # Latest version can be found at:
 # https://gist.github.com/mickael9/0b902da7c13207d1b86e
+#
+# Fix bug by: chengshiwen <chengshiwen0103@gmail.com>
 
 source /usr/bin/sdx.kit
 
@@ -17,7 +20,7 @@ if {$argc < 2} {
 }
 
 set installerFile [lindex $argv 0]
-set destDir  [lindex $argv 1]
+set destDir [lindex $argv 1]
 
 set installerMount /installer
 set dataMount /installerData
@@ -26,14 +29,14 @@ vfs::mk4::Mount $installerFile $installerMount -readonly
 
 lappend auto_path $installerMount/libraries/
 package require vfs::cookfs
-catch {package require Tcllzmadec}
+package require Tcllzmadec
 
 # progress from http://wiki.tcl.tk/16939 (sligtly modified)
 # thanks to the author
 proc progress {cur tot} {
     # set to total width of progress bar
     set total 76
-    
+
     if {$cur == $tot} {
         # cleanup
         set str "\r[string repeat " " [expr $total + 4]]\r"
@@ -119,8 +122,17 @@ foreach {fileName props} $manifest {
 
     if {$type == "link"} {
         set linkTarget [lindex $props 1]
-        file delete $destDir/$fileName
+        set linkTargetPath [file join [file dirname $destDir/$fileName] $linkTarget]
+        if {![file exists $linkTargetPath]} {
+            if {![file exists [file dirname $linkTargetPath]]} {
+                file mkdir [file dirname $linkTargetPath]
+            }
+            set fp [open $linkTargetPath w]
+            close $fp
+        }
+        file delete -force $destDir/$fileName
         file link -symbolic $destDir/$fileName $linkTarget
     }
 }
+
 puts "Done"
