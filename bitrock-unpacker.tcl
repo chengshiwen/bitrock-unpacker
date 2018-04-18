@@ -52,6 +52,11 @@ proc progress {cur tot} {
     puts -nonewline stderr $str
 }
 
+# Copy the project.xml
+file delete -force $destDir
+file mkdir $destDir
+file copy $installerMount/project.xml $destDir
+
 # Read cookfs options
 set optionsFile [open $installerMount/cookfsinfo.txt]
 set options [read $optionsFile]
