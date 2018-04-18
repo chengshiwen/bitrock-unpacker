@@ -124,14 +124,22 @@ foreach {fileName props} $manifest {
         set linkTarget [lindex $props 1]
         set linkTargetPath [file join [file dirname $destDir/$fileName] $linkTarget]
         if {![file exists $linkTargetPath]} {
+            set delPath $linkTargetPath
+            while {![file exists [file dirname $delPath]]} {
+                set delPath [file dirname $delPath]
+            }
             if {![file exists [file dirname $linkTargetPath]]} {
                 file mkdir [file dirname $linkTargetPath]
             }
             set fp [open $linkTargetPath w]
             close $fp
+            file delete -force $destDir/$fileName
+            file link -symbolic $destDir/$fileName $linkTarget
+            file delete -force $delPath
+        } else {
+            file delete -force $destDir/$fileName
+            file link -symbolic $destDir/$fileName $linkTarget
         }
-        file delete -force $destDir/$fileName
-        file link -symbolic $destDir/$fileName $linkTarget
     }
 }
 
